@@ -1,0 +1,135 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+    id 'idea'
+
+    id "com.palantir.baseline-idea" version '4.185.0'
+    id "com.diffplug.spotless" version '6.12.1'
+    id "org.sonarqube" version '3.5.0.2730'
+    id "org.owasp.dependencycheck" version '7.4.4'
+
+    id 'net.nemerosa.versioning' version '3.0.0'
+}
+
+apply plugin: 'com.palantir.baseline-format'
+
+repositories {
+    mavenLocal()
+    maven {
+        credentials {
+            username "$nexusUsername"
+            password "$nexusPassword"
+        }
+        url "$nexusRelease"
+    }
+    maven {
+        credentials {
+            username "$nexusUsername"
+            password "$nexusPassword"
+        }
+        url "$nexusSnapshot"
+    }
+    mavenCentral()
+}
+
+dependencies {
+    // lombok
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    // mapstruct
+    implementation 'org.mapstruct:mapstruct:1.5.3.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
+
+    // test
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:$junitVersion"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
+}
+
+java {
+    withSourcesJar()
+}
+jar {
+    manifest {
+        attributes(
+                'Built-By': 'Codingendless',
+                'Build-Timestamp': DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(LocalDateTime.now()),
+                'Build-Revision': versioning.info.commit,
+                'Created-By': "Gradle ${gradle.gradleVersion}",
+                'Build-Jdk': "${System.properties['java.version']} (${System.properties['java.vendor']} ${System.properties['java.vm.version']})",
+                'Build-OS': "${System.properties['os.name']} ${System.properties['os.arch']} ${System.properties['os.version']}"
+        )
+    }
+}
+
+plugins.withType(JavaPlugin) {
+    project.sourceCompatibility = JavaVersion.VERSION_17
+}
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'com.fortycoderplus.template'
+            artifactId = project.name
+            version = project.version
+
+            from components.java
+
+            pom {
+                name = "Gradle Single Module Template"
+                description = 'Gradle Single Module Template'
+                url = "${scmUrl}"
+                developers {
+                    developer {
+                        id = 'Codingendless'
+                        name = 'Codingendless'
+                        email = 'codingendless@40coderplus.com'
+                    }
+                }
+                scm {
+                    connection = "scm:git:${scmGit}"
+                    url = "${scmUrl}"
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username "$nexusUsername"
+                password "$nexusPassword"
+            }
+            url = version.endsWith('SNAPSHOT') ? "$nexusRelease" : "$nexusSnapshot"
+            allowInsecureProtocol = !url.toString().startsWith("https://")
+        }
+    }
+}
+
+sonarqube {
+    properties {
+        property 'sonar.dependencyCheck.jsonReportPath', 'build/reports/dependency-check-report.json'
+        property 'sonar.dependencyCheck.htmlReportPath', 'build/reports/dependency-check-report.html'
+        property 'sonar.projectName', 'gradle-single-module-template'
+        property 'sonar.projectKey', 'gradle-single-module-template'
+    }
+}
+
+spotless {
+    java {
+        target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+
+        palantirJavaFormat()
+        formatAnnotations()
+    }
+}
