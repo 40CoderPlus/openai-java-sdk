@@ -2,7 +2,11 @@
 
 - Java 11+
 
-# Build
+# How to Use
+
+```shell
+git clone --recurse-submodules git@github.com:40CoderPlus/openai-java-sdk.git
+```
 
 Use [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) to generation client SDKs.
 
