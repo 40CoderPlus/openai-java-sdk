@@ -1,5 +1,5 @@
 /*
- * (c) Copyright 2017-2023 40CoderPlus. All rights reserved.
+ * (c) Copyright 2023 40CoderPlus. All rights reserved.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -18,15 +18,16 @@
  * limitations under the License.
  */
 
-package com.fortycoderplus.template;
+package com.fortycoderplus.openai.sdk;
 
-import java.util.stream.Stream;
+import com.fortycoderplus.openai.sdk.api.OpenAiApi;
+import com.fortycoderplus.openai.sdk.invoker.ApiClient;
 
-public class Main {
+public class OpenAISdk {
 
-    public static void main(String[] args) {
-        Stream.of("Gradle Single Module Template".split(" "))
-                .map(word -> word.repeat(3))
-                .forEach(System.out::println);
+    static OpenAiApi api(String openAIApiKey) {
+        ApiClient client = new ApiClient();
+        client.setRequestInterceptor(builder -> builder.setHeader("Authorization", "Bearer " + openAIApiKey));
+        return new OpenAiApi();
     }
 }
